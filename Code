@@ -1,0 +1,88 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% G is a Generator 
+%%% In (1.) the Agent A receives start, change the state to 1 and sends G^Na’ encrypted with public key of B so that only B can decrypt it 
+
+%%% In (2.) A receives G^Nb' from B and checks the secrecy of Secret via secret(Secret',sec_1,{A,B}) and finally sends (G^Na)^Nb’ 
+
+role role_A(A:agent,B:agent,G:text,Ka,Kb:public_key,SND,RCV:channel(dy))
+played_by A
+def=
+	local
+		State:nat,Nb:text,Na:text,Secret:text
+	init
+		State := 0
+	transition
+		1. State=0 /\ RCV(start) =|> State':=1 /\ Na':=new() /\  
+                           SND({exp(G,Na')}_Kb)
+
+		2. State=1 /\ RCV({exp(G,Nb')}_Ka) =|> State':=2 /\ Secret':=new() /\ 
+                secret(Secret',sec_1,{A,B}) /\ SND({Secret'}_exp(exp(G,Na),Nb'))
+end role
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%% In (1.) the Agent B receives G^Na’, change the state to 1 and sends G^Nb’ encrypted with public key of A so that only A can decrypt it
+
+%%% In (2.) B receives (G^Na’)^Nb' from B and checks the secrecy via secret(Secret',sec_1,{A,B}).
+
+role role_B(A:agent,B:agent,G:text,Ka,Kb:public_key,SND,RCV:channel(dy))
+played_by B
+def=
+	local
+		State:nat,Nb:text,Na:text,Secret:text
+	init
+		State := 0
+	transition
+		1. State=0 /\ RCV({exp(G,Na')}_Kb) =|> State':=1 /\ Nb':=new() /\ 
+                          SND({exp(G,Nb')}_Ka)
+
+		3. State=1 /\ RCV({Secret'}_exp(exp(G,Na),Nb)) =|> State':=2 /\ 
+                          secret(Secret',sec_1,{A,B})
+end role
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+role session1(A:agent,B:agent,G:text,Ka,Kb:public_key)
+def=
+	local
+		SND2,RCV2,SND1,RCV1:channel(dy)
+	composition
+		role_B(A,B,G,Ka,Kb,SND2,RCV2) /\ role_A(A,B,G,Ka,Kb,SND1,RCV1)
+end role
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+role session2(A:agent,B:agent,G:text,Ka,Kb:public_key)
+def=
+	local
+		SND2,RCV2,SND1,RCV1:channel(dy)
+	composition
+		role_B(A,B,G,Ka,Kb,SND2,RCV2) /\ role_A(A,B,G,Ka,Kb,SND1,RCV1)
+end role
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+role environment()
+def=
+	const
+          Bob:agent,hash_0:hash_func,alice:agent,g:text,ka,kb,ki:public_key,         
+          sec_1:protocol_id
+	
+      intruder_knowledge = {alice,bob,g}
+	
+      composition
+         session2(i,bob,g,kb,ki) /\ session1(alice,bob,g,ka,kb)
+end role
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+goal
+	secrecy_of sec_1
+end goal
+
+environment()
