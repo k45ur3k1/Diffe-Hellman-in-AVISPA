@@ -2,7 +2,7 @@
 Diffie Hellman is used to exchange keys between 2 people &amp; The security of DH relies on the difficulty of computing discretelogarithm over a large prime order cyclic group.
 #no exchange of keys happen, only some public variable are shared.
 DH is asymmetric because each side has a different key to start with and they end up with the same secret key.
-Here, we have implemented DH in AVISPA tool and checked against CL-AtSe and OFMC backend for security proofs.
+Here, we have implemented DH in AVISPA tool which resulted unsafe. After implementing Digital Signatures in the protocol and checking against CL-AtSe and OFMC backend for security proofs we finally got the result as safe.
 
 Overview of AVISPA tool 
 Avispa stands for Automated Validation of Internet
